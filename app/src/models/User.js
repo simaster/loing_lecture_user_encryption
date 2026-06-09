@@ -28,6 +28,12 @@ class User {
   async register() {
     const client = this.body;
     try {
+      if (!client.psword || !client.pswordConfirm) {
+        return { success: false, msg: "비밀번호를 입력해주세요." };
+      }
+      if (client.psword !== client.pswordConfirm) {
+        return { success: false, msg: "비밀번호가 일치하지 않습니다." };
+      }
       client.psword = await argon2.hash(client.psword);
       const response = await UserStorage.save(client);
       return response;

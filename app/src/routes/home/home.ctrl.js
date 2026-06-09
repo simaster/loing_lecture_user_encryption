@@ -56,7 +56,7 @@ const process = {
     const url = {
       method: "POST",
       path: "/register",
-      status: response.err ? 409 : 201,
+      status: response.success ? 201 : response.err ? 409 : 400,
     };
 
     log(response, url);

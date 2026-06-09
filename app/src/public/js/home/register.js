@@ -11,15 +11,19 @@ if (registerBtn) {
 }
 
 function register() {
-  if (!registerId.value) return alert("아이디를 입력해주십시오.");
-  if (!registerName.value) return alert("이름을 입력해주십시오.");
-  if (registerPsword.value !== registerConfirmPsword.value)
+  if (!registerId.value) return alert("아이디를 입력해주세요.");
+  if (!registerName.value) return alert("이름을 입력해주세요.");
+  if (!registerPsword.value) return alert("비밀번호를 입력해주세요.");
+  if (!registerConfirmPsword.value) return alert("비밀번호 확인을 입력해주세요.");
+  if (registerPsword.value !== registerConfirmPsword.value) {
     return alert("비밀번호가 일치하지 않습니다.");
+  }
 
   const req = {
     id: registerId.value,
     name: registerName.value,
     psword: registerPsword.value,
+    pswordConfirm: registerConfirmPsword.value,
   };
 
   fetch("/register", {
@@ -32,11 +36,10 @@ function register() {
     .then((res) => res.json())
     .then((res) => {
       if (res.success) {
-        // 회원가입 성공 시 로그인 화면으로 애니메이션 전환 (동일 페이지에 있을 경우)
-        const container = document.getElementById('container');
+        const container = document.getElementById("container");
         if (container) {
           container.classList.remove("active");
-          history.pushState(null, '', '/login');
+          history.pushState(null, "", "/login");
           alert("회원가입이 완료되었습니다. 로그인해주세요.");
         } else {
           location.href = "/login";
@@ -47,6 +50,6 @@ function register() {
       }
     })
     .catch((err) => {
-      console.error("회원가입 중 에러 발생");
+      console.error("회원가입 중 에러 발생", err);
     });
 }

@@ -3,6 +3,7 @@
 const logger = require("../../config/logger");
 const User = require("../../models/User");
 const db = require("../../config/db");
+const jwt = require("jsonwebtoken");
 
 const output = {
   home: (req, res) => {
@@ -32,6 +33,11 @@ const process = {
   login: async (req, res) => {
     const user = new User(req.body);
     const response = await user.login();
+
+    if (response.success) {
+      const access_token = jwt.sign({ id: req.body.id }, 'secure');
+      res.cookie('access_token', access_token, { httpOnly: true });
+    }
 
     const url = {
       method: "POST",

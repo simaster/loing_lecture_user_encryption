@@ -1,6 +1,7 @@
 "use strict";
 
 const UserStorage = require("./UserStorage");
+const argon2 = require("argon2");
 
 class User {
   constructor(body) {
@@ -13,7 +14,7 @@ class User {
       const user = await UserStorage.getUserInfo(client.id);
 
       if (user) {
-        if (user.id === client.id && user.psword === client.psword) {
+        if (await argon2.verify(user.psword, client.psword)) {
           return { success: true };
         }
         return { success: false, msg: "비밀번호가 틀렸습니다." };
@@ -27,6 +28,7 @@ class User {
   async register() {
     const client = this.body;
     try {
+      client.psword = await argon2.hash(client.psword);
       const response = await UserStorage.save(client);
       return response;
     } catch (err) {

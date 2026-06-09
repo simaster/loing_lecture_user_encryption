@@ -1,29 +1,41 @@
-const jwt = require('jsonwebtoken');
-const database = require('../database');
+"use strict";
 
-const validUser = (req, res, next) => {
-    
-    const {access_token} = req.cookies;
+const jwt = require("jsonwebtoken");
 
-    if (!access_token) {
-        res.status(401).send('Access token is missing');
-        return;
-    }
-    try {
-    
-        const { username } = jwt.verify(access_token, 'secure');
-        const userInfo = database.find((data) => data.username === username);
-        
-        if (!userInfo) {
-            throw('Invalid access token');
-        }
+const tokenKey = "access_token";
+const secretKey = "secure";
 
-        next(); // 다음 미들웨어로 넘어가기
+const readAuth = (req) => {
+  const token = req.cookies?.[tokenKey];
+  if (!token) return null;
 
-    } catch (error) {
-        console.error(error);
-        res.status(401).send('Invalid access token');
-    }
+  try {
+    return jwt.verify(token, secretKey);
+  } catch (error) {
+    return null;
+  }
 };
 
-module.exports = { validUser };
+const attachUser = (req, res, next) => {
+  req.user = readAuth(req);
+  next();
+};
+
+const requireAuth = (req, res, next) => {
+  const user = readAuth(req);
+  req.user = user;
+
+  if (!user) {
+    res.clearCookie(tokenKey, { path: "/" });
+    return res.redirect("/login");
+  }
+
+  next();
+};
+
+module.exports = {
+  attachUser,
+  requireAuth,
+  tokenKey,
+  secretKey,
+};

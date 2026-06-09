@@ -9,6 +9,15 @@ const summaryBoardBtn = document.getElementById("summaryBoardBtn");
 const boardCloseBtn = document.getElementById("boardCloseBtn");
 const boardFullscreenBtn = document.getElementById("boardFullscreenBtn");
 
+const simulateloginBtn = document.getElementById("simulate_login_Btn");
+const simulateLogoutBtn = document.getElementById("simulate_logout_Btn");
+const authState = window.__AUTH__ || {
+  isLoggedIn: false,
+  userId: "-",
+  loginTime: "-",
+};
+
+
 let currentData = [...simulationData];
 let lastPredictedLot = "-";
 
@@ -331,6 +340,53 @@ searchInput.addEventListener("input", event => {
   updateDashboard(filtered, currentData);
 });
 
+
+function initializeAuthControls() {
+  if (simulateloginBtn) {
+    simulateloginBtn.textContent = authState.isLoggedIn ? "로그인 중" : "로그인";
+    simulateloginBtn.addEventListener("click", () => {
+      location.href = "/login";
+    });
+  }
+
+  let loginTime = document.getElementById("loginTime");
+  if (!loginTime && simulateloginBtn) {
+    const loginTimeWrap = document.createElement("div");
+    loginTimeWrap.className = "login-status";
+    loginTimeWrap.style.marginTop = "0.5rem";
+
+    const loginTimeLabel = document.createElement("span");
+    loginTimeLabel.textContent = "로그인 시간";
+
+    loginTime = document.createElement("strong");
+    loginTime.id = "loginTime";
+
+    loginTimeWrap.append(loginTimeLabel, document.createTextNode(" "), loginTime);
+    simulateloginBtn.insertAdjacentElement("afterend", loginTimeWrap);
+  }
+
+  if (loginTime) {
+    loginTime.textContent = authState.isLoggedIn ? authState.loginTime : "-";
+  }
+
+  if (simulateLogoutBtn) {
+    simulateLogoutBtn.addEventListener("click", logout);
+  }
+}
+
+async function logout() {
+  try {
+    await fetch("/logout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } finally {
+    location.href = "/login";
+  }
+}
+
 simulateBtn.addEventListener("click", recalculateRisk);
 predictionForm.addEventListener("submit", applyPrediction);
 resetFormBtn.addEventListener("click", resetPredictionForm);
@@ -346,6 +402,7 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape" && summaryBoard.classList.contains("open")) closeSummaryBoard();
 });
 
+initializeAuthControls();
 populateLotOptions();
 resetPredictionForm();
 updateDashboard();

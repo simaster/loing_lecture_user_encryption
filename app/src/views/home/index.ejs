@@ -14,6 +14,8 @@
       <p class="subtitle">스마트공장 전체 모니터링 · 공정 조건 입력 · AI 불량 예측 · 현장 사전 알림 통합 화면</p>
     </div>
     <div class="hero-actions">
+      <button id="simulate_login_Btn">로그인</button>
+      <button id="simulate_logout_Btn">로그아웃</button>
       <button id="simulateBtn">AI 재예측 실행</button>
       <button id="summaryBoardBtn" class="outline-btn">종합 현황 대쉬보드 가기</button>
     </div>
@@ -286,6 +288,7 @@
   <script>
     // MySQL DB 'data' 테이블에서 가져온 데이터를 렌더링 시점에 할당합니다.
     let simulationData = <%- typeof dbData !== 'undefined' ? JSON.stringify(dbData) : '[]' %>;
+    window.__AUTH__ = <%- JSON.stringify(auth || { isLoggedIn: false, userId: '-', loginTime: '-' }) %>;
   </script>
   <script src="/js/home/root.js"></script>
 </body>

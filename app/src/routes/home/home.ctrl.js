@@ -2,11 +2,19 @@
 
 const logger = require("../../config/logger");
 const User = require("../../models/User");
+const db = require("../../config/db");
 
 const output = {
   home: (req, res) => {
     logger.info(`GET / 304 "홈 화면으로 이동"`);
-    res.render("home/index");
+    
+    db.query("SELECT * FROM data", (err, rows) => {
+      if (err) {
+        logger.error(`GET / 500 "데이터베이스 조회 오류: ${err.message}"`);
+        return res.render("home/index", { dbData: [] });
+      }
+      res.render("home/index", { dbData: rows });
+    });
   },
 
   login: (req, res) => {

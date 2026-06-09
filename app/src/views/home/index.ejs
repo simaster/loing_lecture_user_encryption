@@ -1,11 +1,292 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>고무 제조 AI 품질 예측 시뮬레이션</title>
+  <link rel="stylesheet" href="/css/home/root.css" />
 </head>
 <body>
-  여기는 루트입니다.
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Rubber Manufacturing AI Quality Prediction</p>
+      <h1>고무 제조 AI 품질 예측 시뮬레이션 대시보드</h1>
+      <p class="subtitle">스마트공장 전체 모니터링 · 공정 조건 입력 · AI 불량 예측 · 현장 사전 알림 통합 화면</p>
+    </div>
+    <div class="hero-actions">
+      <button id="simulateBtn">AI 재예측 실행</button>
+      <button id="summaryBoardBtn" class="outline-btn">종합 현황 대쉬보드 가기</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="monitor-strip" aria-label="스마트공장 전체 모니터링 상태">
+      <div>
+        <span>라인 상태</span>
+        <strong id="lineStatus">-</strong>
+      </div>
+      <div>
+        <span>예상 양품률</span>
+        <strong id="yieldRate">-</strong>
+      </div>
+      <div>
+        <span>AI 모델 신뢰도</span>
+        <strong id="modelConfidence">94.8%</strong>
+      </div>
+      <div>
+        <span>최종 예측 LOT</span>
+        <strong id="lastPrediction">-</strong>
+      </div>
+    </section>
+
+    <section class="cards">
+      <article class="card">
+        <span>총 LOT</span>
+        <strong id="totalLots">0</strong>
+      </article>
+      <article class="card normal">
+        <span>정상</span>
+        <strong id="normalCount">0</strong>
+      </article>
+      <article class="card warning">
+        <span>주의</span>
+        <strong id="warningCount">0</strong>
+      </article>
+      <article class="card danger">
+        <span>위험</span>
+        <strong id="dangerCount">0</strong>
+      </article>
+    </section>
+
+    <section class="dashboard-grid operations-grid">
+      <article class="panel form-panel">
+        <div class="panel-title">
+          <h2>스마트공장 AI 예측 입력 폼</h2>
+          <p>시뮬레이션 DATA 50의 LOT ID를 선택하면 수집 DB 공정값을 불러와 AI 예측 결과를 표시</p>
+        </div>
+        <form id="predictionForm" class="factory-form">
+          <label>
+            <span>LOT ID</span>
+            <select id="lotInput" required></select>
+          </label>
+          <label>
+            <span>숙성 온도(℃)</span>
+            <input id="agingTempInput" type="number" step="0.1" value="24.5" required />
+          </label>
+          <label>
+            <span>숙성 습도(%)</span>
+            <input id="agingHumidityInput" type="number" step="0.1" value="61.0" required />
+          </label>
+          <label>
+            <span>온습도 편차</span>
+            <input id="deviationInput" type="number" step="0.1" value="2.4" required />
+          </label>
+          <label>
+            <span>성형 온도(℃)</span>
+            <input id="moldingTempInput" type="number" step="0.1" value="152.5" required />
+          </label>
+          <label>
+            <span>성형 압력(bar)</span>
+            <input id="moldingPressureInput" type="number" step="0.1" value="122.0" required />
+          </label>
+          <label>
+            <span>개폐타임(sec)</span>
+            <input id="openCloseTimeInput" type="number" step="0.1" value="3.4" required />
+          </label>
+          <label>
+            <span>외경(mm)</span>
+            <input id="diameterInput" type="number" step="0.001" value="10.006" required />
+          </label>
+          <label>
+            <span>육안검사</span>
+            <select id="visualInput">
+              <option>정상</option>
+              <option>미세흠</option>
+              <option>기포</option>
+              <option>치수불량</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button type="submit">AI 예측 조회</button>
+            <button id="resetFormBtn" type="button" class="secondary">LOT 초기화</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="panel prediction-panel">
+        <div class="panel-title">
+          <h2>실시간 예측 결과</h2>
+          <p>시뮬레이션 LOT ID와 연동된 AI 판정</p>
+        </div>
+        <div id="predictionResult" class="prediction-result normal">
+          <span>대기</span>
+          <strong>LOT ID 선택 후 예측 조회</strong>
+          <p>시뮬레이션 DATA 50의 LOT ID를 선택하면 해당 LOT의 수집 DB 공정값으로 AI 예측 결과를 조회합니다.</p>
+        </div>
+        <div class="control-list">
+          <div><span>관리 기준</span><b>정상 &lt; 30% · 주의 ≥ 30% · 위험 ≥ 60%</b></div>
+          <div><span>권장 조치</span><b id="recommendedAction">-</b></div>
+          <div><span>모니터링 범위</span><b>숙성실 · 성형 · 스웨징 · 전수검사</b></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="panel wide">
+        <div class="panel-title">
+          <h2>AI 사전 알림 현황</h2>
+          <p>불량 확률 60% 이상은 위험, 30% 이상은 주의로 표시</p>
+        </div>
+        <div id="alertList" class="alert-list"></div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-title">
+          <h2>공정별 평균 상태</h2>
+          <p>가상 데이터 기준 평균값</p>
+        </div>
+        <div class="metric-row"><span>숙성실 온도</span><b id="avgAgingTemp">-</b></div>
+        <div class="metric-row"><span>숙성실 습도</span><b id="avgAgingHumidity">-</b></div>
+        <div class="metric-row"><span>성형 압력</span><b id="avgMoldingPressure">-</b></div>
+        <div class="metric-row"><span>스웨징 외경</span><b id="avgDiameter">-</b></div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title table-head">
+        <div>
+          <h2>시뮬레이션 DATA 50</h2>
+          <p>수집 DB 정보를 이용하여 실제 현장의 REAL-TIME 정보를 분석 적용 조정/가능 수집 TIME은 5분 주기 입니다.</p>
+        </div>
+        <input id="searchInput" type="search" placeholder="LOT 또는 상태 검색" />
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>LOT ID</th>
+              <th>숙성 온도(℃)</th>
+              <th>숙성 습도(%)</th>
+              <th>온습도 편차</th>
+              <th>성형 온도(℃)</th>
+              <th>성형 압력(bar)</th>
+              <th>개폐타임(sec)</th>
+              <th>외경(mm)</th>
+              <th>육안검사</th>
+              <th>AI 불량 확률</th>
+              <th>알림</th>
+            </tr>
+          </thead>
+          <tbody id="dataTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <section id="summaryBoard" class="summary-board" aria-hidden="true">
+    <div class="board-shell">
+      <div class="board-topline"></div>
+      <header class="board-header">
+        <h2>스마트공장 AI 종합 현황 대쉬보드</h2>
+        <div class="board-actions">
+          <button id="boardFullscreenBtn" type="button">전체화면 확대</button>
+          <button id="boardCloseBtn" type="button" class="secondary">닫기</button>
+        </div>
+      </header>
+
+      <div class="board-kpis">
+        <article>
+          <div class="kpi-icon blue">LOT</div>
+          <span>Total LOT</span>
+          <strong id="boardTotalLots">0</strong>
+        </article>
+        <article>
+          <div class="kpi-icon orange">AI</div>
+          <span>Avg. Defect Rate</span>
+          <strong id="boardAvgDefect">0%</strong>
+        </article>
+        <article>
+          <div class="kpi-icon blue">OK</div>
+          <span>Yield Rate</span>
+          <strong id="boardYieldRate">0%</strong>
+        </article>
+        <article>
+          <div class="kpi-icon orange">NG</div>
+          <span>Risk LOT Rate</span>
+          <strong id="boardRiskRate">0%</strong>
+        </article>
+      </div>
+
+      <div class="board-main">
+        <article class="board-panel line-table-panel">
+          <table class="board-table">
+            <thead>
+              <tr>
+                <th>Process</th>
+                <th>Total LOT</th>
+                <th>Normal</th>
+                <th>Warning</th>
+                <th>Danger</th>
+                <th>Avg. Risk</th>
+                <th>Trend</th>
+              </tr>
+            </thead>
+            <tbody id="boardProcessTable"></tbody>
+          </table>
+        </article>
+
+        <article class="board-panel chart-panel">
+          <h3>AI Risk Rate - By Process</h3>
+          <div id="boardProcessChart" class="bar-chart"></div>
+        </article>
+      </div>
+
+      <div class="board-bottom">
+        <article class="board-panel gauge-panel">
+          <h3>Overall Quality Score</h3>
+          <div class="gauge">
+            <div id="boardGaugeFill" class="gauge-fill"></div>
+            <div class="gauge-center">
+              <strong id="boardQualityScore">0.0</strong>
+              <span>Quality Score</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="board-panel agent-panel">
+          <h3>Risk Score - Top LOT</h3>
+          <div id="boardTopLots" class="lot-bars"></div>
+        </article>
+
+        <article class="board-panel sla-panel">
+          <h3>Smart Factory Control Limits</h3>
+          <div class="limit-row">
+            <span>정상 LOT 비율</span>
+            <div><b id="boardNormalLimitBar"></b></div>
+            <strong id="boardNormalLimitText">0%</strong>
+          </div>
+          <div class="limit-row orange">
+            <span>위험 LOT 비율</span>
+            <div><b id="boardDangerLimitBar"></b></div>
+            <strong id="boardDangerLimitText">0%</strong>
+          </div>
+        </article>
+      </div>
+
+      <div class="board-alert-ticker">
+        <strong>AI 알림</strong>
+        <div class="ticker-window">
+          <span id="boardAlertText">LOT-001 품질 발생률이 증가 했습니다.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // MySQL DB 'data' 테이블에서 가져온 데이터를 렌더링 시점에 할당합니다.
+    let simulationData = <%- typeof dbData !== 'undefined' ? JSON.stringify(dbData) : '[]' %>;
+  </script>
+  <script src="/js/home/root.js"></script>
 </body>
 </html>
